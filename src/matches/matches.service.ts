@@ -19,6 +19,7 @@ interface Decision {
 
 interface MatchState {
   matchId: string;
+  userTeam: Player[]; // User's team players
   opponent: {
     name: string;
     rating: number;
@@ -102,6 +103,7 @@ export class MatchesService {
     // Create match state
     const matchState: MatchState = {
       matchId,
+      userTeam: userTeam.players, // Store user's team
       opponent: {
         name: opponentName,
         rating: opponentRating,
@@ -390,20 +392,22 @@ export class MatchesService {
         
         if (isUserGoal) {
           state.userScore++;
-          const scorer = this.getRandomPlayer(matchState.opponent.team); // Use opponent team for now
+          const scorer = this.getRandomPlayer(state.userTeam); // ✅ FIX: Use user's team
           state.goals.push({
             minute,
             team: 'user',
             scorer: scorer?.name || 'Player',
+            playerId: scorer?.id,
             type: 'goal',
           });
         } else {
           state.opponentScore++;
-          const scorer = this.getRandomPlayer(matchState.opponent.team);
+          const scorer = this.getRandomPlayer(state.opponent.team);
           state.goals.push({
             minute,
             team: 'opponent',
             scorer: scorer?.name || 'Opponent Player',
+            playerId: scorer?.id,
             type: 'goal',
           });
         }
