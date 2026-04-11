@@ -115,31 +115,33 @@ export class LeagueTeamsService implements OnModuleInit {
       await this.seedTeamPlayers(savedTeam.id, teamData.name);
     }
 
-    console.log('✅ Seeded 16 teams with 18 players each!');
+    console.log('✅ Seeded 16 teams with 18 balanced players each!');
   }
 
   private async seedTeamPlayers(teamId: string, teamName: string) {
-    const positions = [
+    // Define specific positions with counts for realistic squad composition
+    // Total: 18 players (2 GK + 6 DEF + 6 MID + 4 FWD)
+    const positionGroups = [
       // Goalkeepers (2)
-      { position: 'Goalkeeper', count: 2, ratingRange: [78, 88] },
-      // Defenders (6)
-      { position: 'Defender', count: 6, ratingRange: [75, 89] },
-      // Midfielders (6)
-      { position: 'Midfielder', count: 6, ratingRange: [76, 90] },
-      // Forwards (4)
-      { position: 'Forward', count: 4, ratingRange: [77, 91] },
+      { positions: ['GK', 'GK'], ratingRange: [75, 85] },
+      // Defenders (6): 2 CB, 2 LB/RB, 2 flexible
+      { positions: ['CB', 'CB', 'LB', 'RB', 'CB', 'RB'], ratingRange: [70, 88] },
+      // Midfielders (6): mix of CM, CDM, CAM, LM, RM
+      { positions: ['CM', 'CM', 'CDM', 'CAM', 'LM', 'RM'], ratingRange: [72, 90] },
+      // Forwards (4): ST, wingers
+      { positions: ['ST', 'ST', 'LW', 'RW'], ratingRange: [75, 92] },
     ];
 
     let playerIndex = 1;
-    for (const posGroup of positions) {
-      for (let i = 0; i < posGroup.count; i++) {
+    for (const group of positionGroups) {
+      for (const position of group.positions) {
         const rating = Math.floor(
-          posGroup.ratingRange[0] + Math.random() * (posGroup.ratingRange[1] - posGroup.ratingRange[0])
+          group.ratingRange[0] + Math.random() * (group.ratingRange[1] - group.ratingRange[0])
         );
         
         const player = this.leaguePlayersRepository.create({
-          name: this.generatePlayerName(posGroup.position),
-          position: posGroup.position,
+          name: this.generatePlayerName(position),
+          position: position,
           rating,
           price: this.calculatePrice(rating),
           teamId,
