@@ -185,109 +185,130 @@ export class LeagueTeamsService implements OnModuleInit {
   }
 
   private generatePlayerName(position: string): string {
-    // Real football star names organized by position
+    // Real football legends and superstars organized by position
+    // Mix of Modern Era Superstars + Legendary Icons + Special Players
     const playersByPosition = {
       'GK': [
-        'Jan Oblak', 'Manuel Neuer', 'Keylor Navas', 'Hugo Lloris',
-        'Yann Sommer', 'André Onana', 'Unai Simón', 'Wojciech Szczęsny',
-        'David Raya', 'Nick Pope', 'Robert Sánchez', 'Gregor Kobel',
-        'Bernd Leno', 'Aaron Ramsdale', 'Jordan Pickford', 'José Sá',
-        'Emiliano Martínez', 'Ivo Grbić', 'Anatoliy Trubin', 'Giorgi Mamardashvili',
-        'Guglielmo Vicario', 'Alex Meret', 'Lukasz Skorupski', 'Yassine Bounou',
-        'Diogo Costa', 'Gavin Bazunu', 'David de Gea', 'Claudio Bravo',
-        'Samir Handanović', 'Pau López', 'Péter Gulácsi', 'Lukas Hradecky'
+        // Modern Superstars
+        'Thibaut Courtois', 'Alisson Becker', 'Jan Oblak', 'Ederson',
+        'Marc-André ter Stegen', 'Mike Maignan', 'Emiliano Martínez', 'Manuel Neuer',
+        'Yassine Bounou', 'André Onana', 'Unai Simón', 'David Raya',
+        // Legends
+        'Gianluigi Buffon', 'Iker Casillas', 'Petr Čech', 'Edwin van der Sar',
+        'Oliver Kahn', 'Dino Zoff', 'Lev Yashin', 'Gordon Banks',
+        'Sepp Maier', 'Peter Schmeichel', 'Neville Southall', 'Pat Jennings'
       ],
       'CB': [
-        'Sergio Ramos', 'Giorgio Chiellini', 'Thiago Silva', 'Raphael Varane',
-        'Kalidou Koulibaly', 'Jules Koundé', 'Dayot Upamecano', 'Wesley Fofana',
+        // Modern Superstars
+        'Virgil van Dijk', 'Antonio Rüdiger', 'Ruben Dias', 'Marquinhos',
+        'William Saliba', 'Kim Min-jae', 'Eder Militão', 'Jules Koundé',
         'Cristian Romero', 'Lisandro Martínez', 'Gabriel Magalhães', 'Ben White',
-        'Ronald Araújo', 'Sven Botman', 'Matthijs de Ligt', 'Alessandro Bastoni',
-        'Milan Škriniar', 'Stefan de Vrij', 'José María Giménez', 'Pau Torres',
-        'Aymeric Laporte', 'John Stones', 'Nathan Aké', 'Eric Dier',
-        'Micky van de Ven', 'Harry Maguire', 'Victor Lindelöf', 'Ibrahima Konaté',
-        'Joe Gomez', 'Niklas Süle', 'Lucas Hernández', 'Benjamin Pavard'
+        // Legends
+        'Franz Beckenbauer', 'Paolo Maldini', 'Franco Baresi', 'Fabio Cannavaro',
+        'Alessandro Nesta', 'Carles Puyol', 'John Terry', 'Rio Ferdinand',
+        'Nemanja Vidić', 'Giorgio Chiellini', 'Thiago Silva', 'Sergio Ramos',
+        'Gaetano Scirea', 'Bobby Moore', 'Daniel Passarella', 'Ronald Koeman',
+        'Matthias Sammer', 'Laurent Blanc', 'Marcel Desailly', 'Jaap Stam'
       ],
       'LB': [
-        'Andrew Robertson', 'Alphonso Davies', 'Ferland Mendy', 'Alex Telles',
-        'Luke Shaw', 'Nuno Mendes', 'Pervis Estupiñán', 'Oleksandr Zinchenko',
-        'Ben Chilwell', 'Marcos Alonso', 'Kostas Tsimikas', 'David Raum',
-        'Álex Grimaldo', 'Robin Gosens', 'Rayan Aït-Nouri', 'Destiny Udogie',
-        'Marc Cucurella', 'Sergio Reguilón', 'Tyrell Malacia', 'Raphaël Guerreiro',
-        'Juan Bernat', 'Angeliño', 'Rico Lewis', 'Jordi Alba'
+        // Modern Superstars
+        'Alphonso Davies', 'Theo Hernández', 'Andrew Robertson', 'João Cancelo',
+        'Ferland Mendy', 'Luke Shaw', 'Ben Chilwell', 'Nuno Mendes',
+        'Oleksandr Zinchenko', 'Pervis Estupiñán', 'Alex Telles', 'David Raum',
+        // Legends
+        'Roberto Carlos', 'Ashley Cole', 'Marcelo', 'Philipp Lahm',
+        'Giacinto Facchetti', 'Andreas Brehme', 'Patrice Evra', 'Denis Irwin'
       ],
       'RB': [
-        'Trent Alexander-Arnold', 'Kyle Walker', 'Achraf Hakimi', 'Benjamin Pavard',
-        'Dani Carvajal', 'Kieran Trippier', 'Denzel Dumfries', 'Pedro Porro',
-        'Jeremie Frimpong', 'Vanderson', 'Malo Gusto', 'Cesar Azpilicueta',
-        'Jules Koundé', 'Joshua Kimmich', 'Diogo Dalot', 'Aaron Wan-Bissaka',
-        'Matt Doherty', 'Reece James', 'Thomas Meunier', 'Noussair Mazraoui',
-        'Sergiño Dest', 'Giovanni Di Lorenzo', 'Rick Karsdorp', 'Djed Spence'
+        // Modern Superstars
+        'Trent Alexander-Arnold', 'Reece James', 'Achraf Hakimi', 'Kyle Walker',
+        'Dani Carvajal', 'João Cancelo', 'Kieran Trippier', 'Pedro Porro',
+        'Jeremie Frimpong', 'Denzel Dumfries', 'Malo Gusto', 'Diogo Dalot',
+        // Legends
+        'Cafu', 'Dani Alves', 'Philipp Lahm', 'Javier Zanetti',
+        'Lilian Thuram', 'Carlos Alberto', 'Willy Sagnol', 'Maicon'
       ],
       'CDM': [
-        'Casemiro', 'Joshua Kimmich', 'Fabinho', 'N\'Golo Kanté',
-        'Thomas Partey', 'Douglas Luiz', 'Moisés Caicedo', 'Romeo Lavia',
-        'Wilfred Ndidi', 'Ibrahim Sangaré', 'Tyler Adams', 'Edson Álvarez',
-        'Kalvin Phillips', 'Martin Zubimendi', 'Danilo Pereira', 'Manuel Locatelli',
-        'Sandro Tonali', 'Marcelo Brozović', 'Yves Bissouma', 'Sofyan Amrabat',
-        'André', 'Exequiel Palacios', 'Boubacar Kamara', 'Ryan Gravenberch'
+        // Modern Superstars
+        'Rodri', 'Casemiro', 'Joshua Kimmich', 'Declan Rice',
+        'Aurélien Tchouaméni', 'Fabinho', 'William Carvalho', 'Édson Álvarez',
+        'Moisés Caicedo', 'Romeo Lavia', 'Martin Zubimendi', 'Douglas Luiz',
+        // Legends + Special
+        'Claude Makélélé', 'N\'Golo Kanté', 'Sergio Busquets', 'Roy Keane',
+        'Patrick Vieira', 'Lothar Matthäus', 'Frank Rijkaard', 'Fernando Redondo',
+        'Xabi Alonso', 'Michael Ballack', 'Javier Mascherano', 'Daniele De Rossi'
       ],
       'CM': [
-        'Toni Kroos', 'Marco Verratti', 'Sergio Busquets', 'Frenkie de Jong',
-        'İlkay Gündoğan', 'Leon Goretzka', 'Mateo Kovačić', 'Conor Gallagher',
-        'Jorginho', 'Granit Xhaka', 'Scott McTominay', 'Christian Eriksen',
-        'Nicolò Barella', 'Henrikh Mkhitaryan', 'Sergej Milinković-Savić', 'Guido Rodríguez',
-        'Vitinha', 'Warren Zaïre-Emery', 'Eduardo Camavinga', 'Youri Tielemans',
-        'Rúben Neves', 'Gavi', 'Pedri', 'Pablo Sarabia'
+        // Modern Superstars
+        'Kevin De Bruyne', 'Luka Modrić', 'Jude Bellingham', 'Federico Valverde',
+        'Bernardo Silva', 'Frenkie de Jong', 'İlkay Gündoğan', 'Bruno Fernandes',
+        'Martin Ødegaard', 'Nicolò Barella', 'Mateo Kovačić', 'Leon Goretzka',
+        'Phil Foden', 'Eduardo Camavinga', 'Vitinha', 'Warren Zaïre-Emery',
+        // Legends + Roy Hogeg (Legendary Special Player)
+        'Zinedine Zidane', 'Diego Maradona', 'Roy Hogeg', 'Andrés Iniesta',
+        'Xavi Hernández', 'Steven Gerrard', 'Frank Lampard', 'Paul Scholes',
+        'Michel Platini', 'Lothar Matthäus', 'Clarence Seedorf', 'Deco',
+        'Kaká', 'Wesley Sneijder', 'David Silva', 'Toni Kroos', 'Andrea Pirlo',
+        'Michael Laudrup', 'Juan Sebastián Verón', 'Edgar Davids'
       ],
       'CAM': [
-        'Martin Ødegaard', 'James Maddison', 'Jack Grealish', 'Mason Mount',
-        'Bernardo Silva', 'Houssem Aouar', 'Christopher Nkunku', 'Florian Wirtz',
-        'Hakim Ziyech', 'Dani Olmo', 'Marcel Sabitzer', 'Jamal Musiala',
-        'Paulo Dybala', 'Riyad Mahrez', 'Phil Foden', 'Emile Smith Rowe',
-        'Kai Havertz', 'Dimitri Payet', 'Eberechi Eze', 'Harvey Barnes',
-        'Nabil Fekir', 'Julian Brandt', 'Dušan Tadić', 'Fabio Vieira'
+        // Modern Superstars
+        'Phil Foden', 'Martin Ødegaard', 'Bruno Fernandes', 'Jude Bellingham',
+        'Christopher Nkunku', 'Florian Wirtz', 'James Maddison', 'Mason Mount',
+        'Jamal Musiala', 'Jack Grealish', 'Dani Olmo', 'Kai Havertz',
+        // Legends
+        'Diego Maradona', 'Zinedine Zidane', 'Ronaldinho', 'Kaká',
+        'Michel Platini', 'Roberto Baggio', 'Juan Román Riquelme', 'Zico',
+        'Francesco Totti', 'Rivaldo', 'Gianfranco Zola', 'Dennis Bergkamp'
       ],
       'LM': [
-        'Ousmane Dembélé', 'João Félix', 'Raheem Sterling', 'Leroy Sané',
-        'Kingsley Coman', 'Marcus Rashford', 'Son Heung-min', 'Luis Díaz',
-        'Vinícius Jr.', 'Eden Hazard', 'Jadon Sancho', 'Allan Saint-Maximin',
-        'Jack Harrison', 'Yannick Carrasco', 'Jérémy Doku', 'Arnaut Danjuma',
-        'Raphinha', 'Pedro Neto', 'Ryan Kent', 'Leon Bailey',
-        'Wilfried Zaha', 'Diogo Jota', 'Ismaila Sarr', 'Nicolas Pépé'
+        // Modern Superstars
+        'Vinícius Jr', 'Rafael Leão', 'Khvicha Kvaratskhelia', 'Luis Díaz',
+        'Marcus Rashford', 'Gabriel Martinelli', 'Nico Williams', 'Leroy Sané',
+        'Kingsley Coman', 'Ousmane Dembélé', 'João Félix', 'Jadon Sancho',
+        // Legends
+        'Ronaldinho', 'Rivaldo', 'Ryan Giggs', 'Pavel Nedvěd',
+        'Robert Pires', 'Marc Overmars', 'Franck Ribéry', 'Eden Hazard'
       ],
       'RM': [
-        'Serge Gnabry', 'Federico Chiesa', 'Ferran Torres', 'Riyad Mahrez',
-        'Gabriel Martinelli', 'Antony', 'Khvicha Kvaratskhelia', 'Julián Álvarez',
-        'Jarrod Bowen', 'Adama Traoré', 'Dejan Kulusevski', 'Lucas Ocampos',
-        'Noni Madueke', 'Takefusa Kubo', 'Domenico Berardi', 'Steven Bergwijn',
-        'Amine Harit', 'Carlos Soler', 'Matheus Cunha', 'Pablo Sarabia',
-        'Dušan Vlahović', 'Cengiz Ünder', 'Andreas Skov Olsen', 'Jesús Corona'
+        // Modern Superstars
+        'Bukayo Saka', 'Mohamed Salah', 'Serge Gnabry', 'Federico Chiesa',
+        'Ousmane Dembélé', 'Raphinha', 'Antony', 'Riyad Mahrez',
+        'Jarrod Bowen', 'Khvicha Kvaratskhelia', 'Dejan Kulusevski', 'Bryan Mbeumo',
+        // Legends
+        'David Beckham', 'Arjen Robben', 'Gareth Bale', 'Luis Figo',
+        'Jairzinho', 'Ángel Di María', 'Andres Iniesta', 'George Best'
       ],
       'ST': [
-        'Karim Benzema', 'Lautaro Martínez', 'Victor Osimhen', 'Dusan Vlahović',
-        'Ivan Toney', 'Ollie Watkins', 'Alexander Isak', 'Randal Kolo Muani',
-        'Jonathan David', 'Patrik Schick', 'Gianluca Scamacca', 'Tammy Abraham',
-        'Dominic Calvert-Lewin', 'Callum Wilson', 'Romelu Lukaku', 'Timo Werner',
-        'Álvaro Morata', 'Memphis Depay', 'Youssef En-Nesyri', 'Wissam Ben Yedder',
-        'Ciro Immobile', 'Edin Džeko', 'Paulo Dybala', 'Gonçalo Ramos',
-        'Rasmus Højlund', 'Joshua Zirkzee', 'Loïs Openda', 'Serhou Guirassy',
-        'Artem Dovbyk', 'Santiago Giménez', 'Benjamin Šeško', 'Mateo Retegui'
+        // Modern Superstars
+        'Kylian Mbappé', 'Erling Haaland', 'Harry Kane', 'Robert Lewandowski',
+        'Karim Benzema', 'Victor Osimhen', 'Lautaro Martínez', 'Darwin Núñez',
+        'Dusan Vlahović', 'Ivan Toney', 'Alexander Isak', 'Julián Álvarez',
+        'Gonçalo Ramos', 'Rasmus Højlund', 'Ollie Watkins', 'Randal Kolo Muani',
+        // Legends
+        'Pelé', 'Ronaldo Nazário', 'Thierry Henry', 'Marco van Basten',
+        'Gerd Müller', 'Romário', 'George Weah', 'Gabriel Batistuta',
+        'Alan Shearer', 'Ruud van Nistelrooy', 'Didier Drogba', 'Zlatan Ibrahimović',
+        'Sergio Agüero', 'Luis Suárez', 'Samuel Eto\'o', 'Fernando Torres',
+        'Henrik Larsson', 'Andriy Shevchenko', 'Filippo Inzaghi', 'David Villa'
       ],
       'LW': [
-        'Sadio Mané', 'Heung-Min Son', 'Ansu Fati', 'Moussa Diaby',
-        'Nico Williams', 'Alejandro Garnacho', 'Cody Gakpo', 'Anthony Elanga',
-        'Marco Asensio', 'Cristian Tello', 'Samuel Chukwueze', 'Ferran Torres',
-        'Yeremy Pino', 'Álex Baena', 'Bryan Gil', 'Facundo Pellistri',
-        'Michael Olise', 'Crysencio Summerville', 'Mikel Oyarzabal', 'Vinícius Júnior',
-        'Rafael Leão', 'Leroy Sané', 'Julian Alvarez', 'Lois Openda'
+        // Modern Superstars
+        'Vinícius Jr', 'Neymar Jr', 'Son Heung-min', 'Rafael Leão',
+        'Khvicha Kvaratskhelia', 'Marcus Rashford', 'Gabriel Martinelli', 'Jack Grealish',
+        'Luis Díaz', 'Nico Williams', 'Cody Gakpo', 'Ansu Fati',
+        // Legends
+        'Cristiano Ronaldo', 'Thierry Henry', 'Ronaldinho', 'Rivaldo',
+        'Ryan Giggs', 'Pavel Nedvěd', 'Eden Hazard', 'Franck Ribéry'
       ],
       'RW': [
-        'Mohamed Salah', 'Bernardo Silva', 'Ángel Di María', 'Hakim Ziyech',
-        'Rodrygo', 'Bukayo Saka', 'Dejan Kulusevski', 'Bryan Mbeumo',
-        'Jesús Navas', 'Riyad Mahrez', 'Federico Chiesa', 'Dušan Tadić',
-        'Mason Greenwood', 'Amad Diallo', 'Anwar El Ghazi', 'Lucas Moura',
-        'David Neres', 'Arnaut Groeneveld', 'Mohamed Kudus', 'Matheus Pereira',
-        'Yankuba Minteh', 'Callum Hudson-Odoi', 'Hakim Ziyech', 'Gelson Martins'
+        // Modern Superstars
+        'Mohamed Salah', 'Bukayo Saka', 'Bernardo Silva', 'Phil Foden',
+        'Federico Chiesa', 'Ousmane Dembélé', 'Antony', 'Serge Gnabry',
+        'Raphinha', 'Riyad Mahrez', 'Jarrod Bowen', 'Bryan Mbeumo',
+        // Legends
+        'Lionel Messi', 'Cristiano Ronaldo', 'Arjen Robben', 'Gareth Bale',
+        'David Beckham', 'Luis Figo', 'George Best', 'Ángel Di María'
       ],
     };
 
