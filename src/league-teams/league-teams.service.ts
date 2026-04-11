@@ -79,6 +79,24 @@ export class LeagueTeamsService implements OnModuleInit {
     }));
   }
 
+  async resetLeague() {
+    console.log('🔄 Resetting league database...');
+    
+    // Delete all players and teams
+    await this.leaguePlayersRepository.delete({});
+    await this.leagueTeamsRepository.delete({});
+    
+    console.log('✅ Database cleared, reseeding...');
+    
+    // Reseed with new 18-player logic
+    await this.seedLeague();
+    
+    return { 
+      success: true, 
+      message: 'League reset successful! All teams now have 18 balanced players.' 
+    };
+  }
+
   private async seedLeague() {
     console.log('🏆 Seeding league with 16 teams...');
 

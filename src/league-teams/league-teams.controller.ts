@@ -29,4 +29,9 @@ export class LeagueTeamsController {
   ) {
     return this.leagueTeamsService.updateFormation(id, body.formation, body.lineup);
   }
+
+  @Post('admin/reset')
+  async resetLeague() {
+    return this.leagueTeamsService.resetLeague();
+  }
 }
