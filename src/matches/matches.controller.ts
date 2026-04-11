@@ -8,8 +8,8 @@ export class MatchesController {
 
   @Post('start')
   @UseGuards(JwtAuthGuard)
-  async startMatch(@Request() req) {
-    return this.matchesService.startMatch(req.user.id);
+  async startMatch(@Request() req, @Body() body: { teamId?: string; formation?: string }) {
+    return this.matchesService.startMatch(req.user.id, body.teamId, body.formation);
   }
 
   @Post('decision')
@@ -20,8 +20,8 @@ export class MatchesController {
 
   @Post('complete')
   @UseGuards(JwtAuthGuard)
-  async completeMatch(@Request() req, @Body() body: { matchId: string }) {
-    return this.matchesService.completeMatch(req.user.id, body.matchId);
+  async completeMatch(@Request() req, @Body() body: { matchId: string; homeScore?: number; awayScore?: number }) {
+    return this.matchesService.completeMatch(req.user.id, body.matchId, body.homeScore, body.awayScore);
   }
 
   @Get('leaderboard')

@@ -4,6 +4,7 @@ import { Repository } from 'typeorm';
 import { Match } from './match.entity';
 import { User } from '../users/user.entity';
 import { Player } from '../players/player.entity';
+import { LeagueTeam } from '../league-teams/league-team.entity';
 import { UsersService } from '../users/users.service';
 
 interface Decision {
@@ -39,10 +40,33 @@ export class MatchesService {
     private usersRepository: Repository<User>,
     @InjectRepository(Player)
     private playersRepository: Repository<Player>,
+    @InjectRepository(LeagueTeam)
+    private leagueTeamsRepository: Repository<LeagueTeam>,
     private usersService: UsersService,
   ) {}
 
-  async startMatch(userId: string) {
+  async startMatch(userId: string, teamId?: string, formation?: string) {
+    // Fetch user to get their selected league team
+    const user = await this.usersRepository.findOne({ where: { id: userId } });
+    if (!user) {
+      throw new Error('User not found');
+    }
+    
+    // Use teamId from request if provided, otherwise use user's saved leagueTeamId
+    const selectedTeamId = teamId || user.leagueTeamId;
+    if (!selectedTeamId) {
+      throw new Error('User has not selected a league team');
+    }
+
+    // Fetch the user's league team with all players
+    const userTeam = await this.leagueTeamsRepository.findOne({
+      where: { id: selectedTeamId },
+      relations: ['players'],
+    });
+    if (!userTeam) {
+      throw new Error('League team not found');
+    }
+
     // Generate random opponent team
     const allPlayers = await this.playersRepository.find();
     const opponentTeam = this.getRandomTeam(allPlayers, 11);
@@ -72,6 +96,11 @@ export class MatchesService {
 
     return {
       matchId,
+      team: {
+        id: userTeam.id,
+        name: userTeam.name,
+        players: userTeam.players, // All 18 players for substitutions
+      },
       opponent: {
         name: opponentName,
         rating: opponentRating,
@@ -116,33 +145,36 @@ export class MatchesService {
     };
   }
 
-  async completeMatch(userId: string, matchId: string) {
+  async completeMatch(userId: string, matchId: string, userScore?: number, opponentScore?: number) {
     const matchState = this.activeMatches.get(matchId);
     if (!matchState) {
       throw new Error('Match not found');
     }
 
-    // Calculate final score based on decisions
-    const totalEffect = matchState.userChoices.reduce((sum, c) => sum + c.effect, 0);
-    
-    // Base probability (50-50)
-    let userGoalProbability = 0.5 + (totalEffect * 0.05); // Each +1 effect = 5% better chance
-    userGoalProbability = Math.max(0.2, Math.min(0.8, userGoalProbability)); // Clamp between 20-80%
+    // Use provided scores if available, otherwise calculate
+    if (userScore === undefined || opponentScore === undefined) {
+      // Calculate final score based on decisions
+      const totalEffect = matchState.userChoices.reduce((sum, c) => sum + c.effect, 0);
+      
+      // Base probability (50-50)
+      let userGoalProbability = 0.5 + (totalEffect * 0.05); // Each +1 effect = 5% better chance
+      userGoalProbability = Math.max(0.2, Math.min(0.8, userGoalProbability)); // Clamp between 20-80%
 
-    // Simulate goals (3-8 total goals in match)
-    const totalGoals = Math.floor(Math.random() * 6) + 3;
-    let userScore = 0;
-    let opponentScore = 0;
+      // Simulate goals (3-8 total goals in match)
+      const totalGoals = Math.floor(Math.random() * 6) + 3;
+      userScore = 0;
+      opponentScore = 0;
 
-    for (let i = 0; i < totalGoals; i++) {
-      if (Math.random() < userGoalProbability) {
-        userScore++;
-      } else {
-        opponentScore++;
+      for (let i = 0; i < totalGoals; i++) {
+        if (Math.random() < userGoalProbability) {
+          userScore++;
+        } else {
+          opponentScore++;
+        }
       }
     }
 
-    // Determine result
+    // Determine result based on ACTUAL scores
     let result: string;
     let coinsEarned: number;
     let starsEarned: number;

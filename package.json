@@ -1,6 +1,6 @@
 {
   "name": "speed-manager-backend",
-  "version": "1.0.0",
+  "version": "1.5.2",
   "description": "Speed Manager Game Backend API",
   "main": "dist/main.js",
   "scripts": {
