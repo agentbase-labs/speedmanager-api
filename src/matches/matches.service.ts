@@ -87,8 +87,19 @@ export class MatchesService {
       userTeam.players.slice(0, 11).reduce((sum, p) => sum + p.rating, 0) / 11
     );
 
+    // ✅ FIX: Create Match DB record at start (not completion) so commentary can reference it
+    const match = this.matchesRepository.create({
+      userId,
+      opponentName,
+      userScore: 0,
+      opponentScore: 0,
+      status: 'live',
+      currentMinute: 0,
+    });
+    const savedMatch = await this.matchesRepository.save(match);
+    const matchId = savedMatch.id; // Use the database UUID
+
     // Create match state
-    const matchId = `match_${Date.now()}_${userId}`;
     const matchState: MatchState = {
       matchId,
       opponent: {
@@ -209,18 +220,17 @@ export class MatchesService {
       starsEarned = 0;
     }
 
-    // Save match to database
-    const match = this.matchesRepository.create({
-      userId,
-      opponentName: matchState.opponent.name,
+    // Update match in database (already created at match start)
+    await this.matchesRepository.update(matchId, {
       userScore,
       opponentScore,
       coinsEarned,
       starsEarned,
       decisions: matchState.userChoices,
       result,
+      status: 'completed',
+      currentMinute: 90,
     });
-    await this.matchesRepository.save(match);
 
     // Update user stats
     await this.usersService.updateCoins(userId, coinsEarned);
