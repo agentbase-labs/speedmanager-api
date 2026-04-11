@@ -6,6 +6,8 @@ import { User } from '../users/user.entity';
 import { Player } from '../players/player.entity';
 import { LeagueTeam } from '../league-teams/league-team.entity';
 import { UsersService } from '../users/users.service';
+import { MatchCommentaryService } from '../match-commentary/match-commentary.service';
+import { MatchEventsService } from '../match-events/match-events.service';
 
 interface Decision {
   id: string;
@@ -27,6 +29,8 @@ interface MatchState {
   opponentScore: number;
   userChoices: any[];
   startTime: number;
+  goals: any[]; // Track goals scored during match
+  teamRating: number; // User team rating
 }
 
 @Injectable()
@@ -43,6 +47,8 @@ export class MatchesService {
     @InjectRepository(LeagueTeam)
     private leagueTeamsRepository: Repository<LeagueTeam>,
     private usersService: UsersService,
+    private matchCommentaryService: MatchCommentaryService,
+    private matchEventsService: MatchEventsService,
   ) {}
 
   async startMatch(userId: string, teamId?: string, formation?: string) {
@@ -75,6 +81,11 @@ export class MatchesService {
 
     // Generate decision moments
     const decisions = this.generateDecisions();
+    
+    // Calculate user team rating
+    const userTeamRating = Math.floor(
+      userTeam.players.slice(0, 11).reduce((sum, p) => sum + p.rating, 0) / 11
+    );
 
     // Create match state
     const matchId = `match_${Date.now()}_${userId}`;
@@ -90,9 +101,14 @@ export class MatchesService {
       opponentScore: 0,
       userChoices: [],
       startTime: Date.now(),
+      goals: [],
+      teamRating: userTeamRating,
     };
 
     this.activeMatches.set(matchId, matchState);
+    
+    // ✅ BUG FIX: Generate goals during match simulation
+    this.simulateMatchGoals(matchId);
 
     return {
       matchId,
@@ -331,5 +347,150 @@ export class MatchesService {
       'Panthers', 'Wolves', 'Hawks', 'Falcons', 'Storm',
     ];
     return names[Math.floor(Math.random() * names.length)];
+  }
+
+  // ✅ BUG FIX: Simulate goals during match (called asynchronously)
+  private async simulateMatchGoals(matchId: string) {
+    const matchState = this.activeMatches.get(matchId);
+    if (!matchState) return;
+
+    // Calculate goal probability based on team ratings
+    const ratingDiff = matchState.teamRating - matchState.opponent.rating;
+    let userGoalProb = 0.5 + (ratingDiff / 200); // Normalize rating difference
+    userGoalProb = Math.max(0.3, Math.min(0.7, userGoalProb)); // Clamp 30-70%
+
+    // Generate 2-6 total goals over 90 minutes
+    const totalGoals = Math.floor(Math.random() * 5) + 2; // 2-6 goals
+    const goalMinutes = [];
+    
+    for (let i = 0; i < totalGoals; i++) {
+      // Random minute between 1-90
+      goalMinutes.push(Math.floor(Math.random() * 90) + 1);
+    }
+    
+    goalMinutes.sort((a, b) => a - b);
+
+    // Schedule goals to be added over time
+    for (const minute of goalMinutes) {
+      setTimeout(() => {
+        const state = this.activeMatches.get(matchId);
+        if (!state) return;
+
+        const isUserGoal = Math.random() < userGoalProb;
+        
+        if (isUserGoal) {
+          state.userScore++;
+          const scorer = this.getRandomPlayer(matchState.opponent.team); // Use opponent team for now
+          state.goals.push({
+            minute,
+            team: 'user',
+            scorer: scorer?.name || 'Player',
+            type: 'goal',
+          });
+        } else {
+          state.opponentScore++;
+          const scorer = this.getRandomPlayer(matchState.opponent.team);
+          state.goals.push({
+            minute,
+            team: 'opponent',
+            scorer: scorer?.name || 'Opponent Player',
+            type: 'goal',
+          });
+        }
+      }, minute * 1000); // Schedule goal at that minute (1s = 1 min)
+    }
+  }
+
+  async getMatchGoals(matchId: string) {
+    const matchState = this.activeMatches.get(matchId);
+    if (!matchState) {
+      throw new Error('Match not found');
+    }
+
+    return {
+      matchId,
+      userScore: matchState.userScore,
+      opponentScore: matchState.opponentScore,
+      goals: matchState.goals,
+    };
+  }
+
+  async getMatchEvents(matchId: string) {
+    return this.matchEventsService.getMatchEvents(matchId);
+  }
+
+  private getRandomPlayer(team: Player[]): Player | null {
+    if (!team || team.length === 0) return null;
+    return team[Math.floor(Math.random() * team.length)];
+  }
+
+  // ✅ BUG FIX: Implement substitution logic
+  async makeSubstitution(matchId: string, playerOutId: string, playerInId: string) {
+    const matchState = this.activeMatches.get(matchId);
+    if (!matchState) {
+      throw new Error('Match not found');
+    }
+
+    // Fetch the actual player records to swap
+    const playerOut = await this.playersRepository.findOne({ where: { id: playerOutId } });
+    const playerIn = await this.playersRepository.findOne({ where: { id: playerInId } });
+
+    if (!playerOut || !playerIn) {
+      throw new Error('Player not found');
+    }
+
+    // Record substitution event
+    const currentMinute = Math.floor((Date.now() - matchState.startTime) / 1000);
+    matchState.userChoices.push({
+      type: 'substitution',
+      playerOut: playerOut.name,
+      playerIn: playerIn.name,
+      minute: Math.min(currentMinute, 90),
+    });
+
+    return {
+      success: true,
+      message: `Substitution made: ${playerOut.name} → ${playerIn.name}`,
+      playerOut: playerOut.name,
+      playerIn: playerIn.name,
+    };
+  }
+
+  // Commentary system integration
+  async getMatchCommentary(matchId: string, sinceMinute?: number) {
+    const commentary = await this.matchCommentaryService.getMatchCommentary(matchId, sinceMinute);
+    return { commentary };
+  }
+
+  async generateCommentary(matchId: string, minute: number) {
+    const matchState = this.activeMatches.get(matchId);
+    if (!matchState) {
+      throw new Error('Match not found');
+    }
+
+    // Get player names from teams
+    const homePlayers = matchState.opponent.team.map(p => ({ 
+      id: p.id, 
+      name: p.name 
+    }));
+    const awayPlayers = matchState.opponent.team.map(p => ({ 
+      id: p.id, 
+      name: p.name 
+    }));
+
+    const events = await this.matchCommentaryService.generateAndSaveCommentary(
+      matchId,
+      minute,
+      {
+        homeTeam: 'Your Team',
+        awayTeam: matchState.opponent.name,
+        homeScore: matchState.userScore,
+        awayScore: matchState.opponentScore,
+        homePlayers,
+        awayPlayers,
+      }
+    );
+
+    return { events };
   }
 }
