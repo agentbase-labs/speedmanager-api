@@ -19,7 +19,7 @@ interface Decision {
 
 interface MatchState {
   matchId: string;
-  userTeam: Player[]; // User's team players
+  userTeam: any[]; // User's team players (LeaguePlayer[] or Player[])
   opponent: {
     name: string;
     rating: number;
