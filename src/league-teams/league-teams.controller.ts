@@ -25,9 +25,9 @@ export class LeagueTeamsController {
   @Put(':id/formation')
   async updateFormation(
     @Param('id') id: string,
-    @Body() body: { formation: string; lineup: any[] }
+    @Body() body: { formation: string; lineup?: any[] }
   ) {
-    return this.leagueTeamsService.updateFormation(id, body.formation, body.lineup);
+    return this.leagueTeamsService.updateFormation(id, body.formation, body.lineup || []);
   }
 
   @Post('admin/reset')

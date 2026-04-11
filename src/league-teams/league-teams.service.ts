@@ -40,24 +40,29 @@ export class LeagueTeamsService implements OnModuleInit {
     const team = await this.findById(teamId);
     if (!team) return null;
 
-    // Reset all players
-    await this.leaguePlayersRepository.update(
-      { teamId },
-      { isStarter: false, positionInFormation: null }
-    );
+    // Update formation
+    team.formation = formation;
 
-    // Update lineup
-    for (const position of lineup) {
+    // Only update lineup if provided
+    if (lineup && lineup.length > 0) {
+      // Reset all players
       await this.leaguePlayersRepository.update(
-        { id: position.playerId },
-        { 
-          isStarter: true, 
-          positionInFormation: position.slot 
-        }
+        { teamId },
+        { isStarter: false, positionInFormation: null }
       );
+
+      // Update lineup
+      for (const position of lineup) {
+        await this.leaguePlayersRepository.update(
+          { id: position.playerId },
+          { 
+            isStarter: true, 
+            positionInFormation: position.slot 
+          }
+        );
+      }
     }
 
-    team.formation = formation;
     return this.leagueTeamsRepository.save(team);
   }
 
