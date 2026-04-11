@@ -5,11 +5,12 @@ import { MatchesController } from './matches.controller';
 import { Match } from './match.entity';
 import { User } from '../users/user.entity';
 import { Player } from '../players/player.entity';
+import { LeagueTeam } from '../league-teams/league-team.entity';
 import { UsersModule } from '../users/users.module';
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([Match, User, Player]),
+    TypeOrmModule.forFeature([Match, User, Player, LeagueTeam]),
     UsersModule,
   ],
   providers: [MatchesService],
