@@ -105,7 +105,7 @@ export class LeagueTeamsService implements OnModuleInit {
       const team = this.leagueTeamsRepository.create({
         ...teamData,
         nickname: teamData.name,
-        budget: 50000000 + Math.random() * 50000000,
+        budget: Math.floor(50000000 + Math.random() * 50000000),
         formation: this.getRandomFormation(),
         tactics: this.getRandomTactics(),
         recentForm: this.generateRandomForm(),
