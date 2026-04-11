@@ -3,6 +3,7 @@ import { User } from '../users/user.entity';
 import { LeagueTeam } from '../league-teams/league-team.entity';
 import { MatchEvent } from '../match-events/match-event.entity';
 import { PlayerRating } from '../player-ratings/player-rating.entity';
+import { MatchCommentary } from '../match-commentary/match-commentary.entity';
 
 @Entity('matches')
 export class Match {
@@ -74,4 +75,7 @@ export class Match {
 
   @OneToMany(() => PlayerRating, rating => rating.match)
   playerRatings: PlayerRating[];
+
+  @OneToMany(() => MatchCommentary, commentary => commentary.match)
+  commentary: MatchCommentary[];
 }

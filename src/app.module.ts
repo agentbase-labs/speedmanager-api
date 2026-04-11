@@ -11,6 +11,8 @@ import { TransfersModule } from './transfers/transfers.module';
 import { FormationsModule } from './formations/formations.module';
 import { MatchEventsModule } from './match-events/match-events.module';
 import { EmailModule } from './email/email.module';
+import { CommentaryModule } from './commentary/commentary.module';
+import { MatchCommentaryModule } from './match-commentary/match-commentary.module';
 import { User } from './users/user.entity';
 import { Player } from './players/player.entity';
 import { UserPlayer } from './players/user-player.entity';
@@ -22,6 +24,7 @@ import { Transfer } from './transfers/transfer.entity';
 import { Formation } from './formations/formation.entity';
 import { MatchEvent } from './match-events/match-event.entity';
 import { PlayerRating } from './player-ratings/player-rating.entity';
+import { MatchCommentary } from './match-commentary/match-commentary.entity';
 
 @Module({
   imports: [
@@ -46,6 +49,7 @@ import { PlayerRating } from './player-ratings/player-rating.entity';
         Formation,
         MatchEvent,
         PlayerRating,
+        MatchCommentary,
       ],
       synchronize: true, // Auto-create tables (for development)
       logging: false,
@@ -58,6 +62,8 @@ import { PlayerRating } from './player-ratings/player-rating.entity';
     TransfersModule,
     FormationsModule,
     MatchEventsModule,
+    CommentaryModule,
+    MatchCommentaryModule,
   ],
   controllers: [AppController],
 })

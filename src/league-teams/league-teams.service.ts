@@ -45,6 +45,21 @@ export class LeagueTeamsService implements OnModuleInit {
 
     // Only update lineup if provided
     if (lineup && lineup.length > 0) {
+      // ✅ VALIDATION: Check for exactly 1 GK in lineup
+      const gkCount = lineup.filter(pos => {
+        const player = team.players.find(p => p.id === pos.playerId);
+        return player?.position === 'GK';
+      }).length;
+      
+      if (gkCount !== 1) {
+        throw new Error(`Invalid formation: Must have exactly 1 goalkeeper (found ${gkCount})`);
+      }
+      
+      // Validate we have exactly 11 starters
+      if (lineup.length !== 11) {
+        throw new Error(`Invalid formation: Must have exactly 11 players (found ${lineup.length})`);
+      }
+      
       // Reset all players
       await this.leaguePlayersRepository.update(
         { teamId },
@@ -158,24 +173,31 @@ export class LeagueTeamsService implements OnModuleInit {
 
   private async seedTeamPlayers(teamId: string, teamName: string) {
     // Define specific positions with counts for realistic squad composition
-    // Total: 18 players (2 GK + 6 DEF + 6 MID + 4 FWD)
+    // Total: 18 players (1 GK + 1 backup GK + 6 DEF + 6 MID + 4 FWD)
+    // ⚠️ BUG FIX: Changed from 2 GK to 1 GK + 1 backup to prevent duplicate GKs in starting XI
     const positionGroups = [
-      // Goalkeepers (2)
-      { positions: ['GK', 'GK'], ratingRange: [75, 85] },
+      // Goalkeepers (1 starter + 1 backup = 2 total)
+      { positions: ['GK'], ratingRange: [78, 88], isStarter: true },
+      { positions: ['GK'], ratingRange: [70, 78], isStarter: false },
       // Defenders (6): 2 CB, 2 LB/RB, 2 flexible
-      { positions: ['CB', 'CB', 'LB', 'RB', 'CB', 'RB'], ratingRange: [70, 88] },
+      { positions: ['CB', 'CB', 'LB', 'RB', 'CB', 'RB'], ratingRange: [70, 88], isStarter: true },
       // Midfielders (6): mix of CM, CDM, CAM, LM, RM
-      { positions: ['CM', 'CM', 'CDM', 'CAM', 'LM', 'RM'], ratingRange: [72, 90] },
-      // Forwards (4): ST, wingers
-      { positions: ['ST', 'ST', 'LW', 'RW'], ratingRange: [75, 92] },
+      { positions: ['CM', 'CM', 'CDM', 'CAM', 'LM', 'RM'], ratingRange: [72, 90], isStarter: true },
+      // Forwards (4): ST, wingers (3 starters + 1 bench)
+      { positions: ['ST', 'ST', 'LW'], ratingRange: [78, 92], isStarter: true },
+      { positions: ['RW'], ratingRange: [75, 88], isStarter: false },
     ];
 
-    let playerIndex = 1;
+    let starterIndex = 1;
+    let benchIndex = 1;
+    
     for (const group of positionGroups) {
       for (const position of group.positions) {
         const rating = Math.floor(
           group.ratingRange[0] + Math.random() * (group.ratingRange[1] - group.ratingRange[0])
         );
+        
+        const isStarter = group.isStarter !== false && starterIndex <= 11;
         
         const player = this.leaguePlayersRepository.create({
           name: this.generatePlayerName(position),
@@ -183,15 +205,31 @@ export class LeagueTeamsService implements OnModuleInit {
           rating,
           price: this.calculatePrice(rating),
           teamId,
-          isStarter: playerIndex <= 11, // First 11 are starters
-          positionInFormation: playerIndex <= 11 ? playerIndex : null,
+          isStarter,
+          positionInFormation: isStarter ? starterIndex : null,
           fitness: 85 + Math.floor(Math.random() * 15),
           morale: 'Normal',
         });
 
         await this.leaguePlayersRepository.save(player);
-        playerIndex++;
+        
+        if (isStarter) {
+          starterIndex++;
+        } else {
+          benchIndex++;
+        }
       }
+    }
+    
+    // ✅ VALIDATION: Ensure exactly 1 GK in starting XI
+    const starters = await this.leaguePlayersRepository.find({
+      where: { teamId, isStarter: true }
+    });
+    
+    const gkCount = starters.filter(p => p.position === 'GK').length;
+    if (gkCount !== 1) {
+      console.error(`❌ VALIDATION FAILED: Team ${teamId} has ${gkCount} GKs in starting XI`);
+      throw new Error(`Invalid lineup: ${gkCount} goalkeepers in starting XI`);
     }
   }
 
