@@ -84,9 +84,10 @@ export class LeagueTeamsService implements OnModuleInit {
   async resetLeague() {
     console.log('🔄 Resetting league database...');
     
-    // Delete all players and teams
-    await this.leaguePlayersRepository.clear();
-    await this.leagueTeamsRepository.clear();
+    // Delete all players first (to avoid foreign key constraint issues)
+    await this.leaguePlayersRepository.createQueryBuilder().delete().execute();
+    // Then delete all teams
+    await this.leagueTeamsRepository.createQueryBuilder().delete().execute();
     
     console.log('✅ Database cleared, reseeding...');
     
