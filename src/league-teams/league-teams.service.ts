@@ -85,8 +85,8 @@ export class LeagueTeamsService implements OnModuleInit {
     console.log('🔄 Resetting league database...');
     
     // Delete all players and teams
-    await this.leaguePlayersRepository.delete({});
-    await this.leagueTeamsRepository.delete({});
+    await this.leaguePlayersRepository.clear();
+    await this.leagueTeamsRepository.clear();
     
     console.log('✅ Database cleared, reseeding...');
     
