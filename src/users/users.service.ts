@@ -45,7 +45,10 @@ export class UsersService {
   }
 
   async getProfile(userId: string) {
-    const user = await this.usersRepository.findOne({ where: { id: userId } });
+    const user = await this.usersRepository.findOne({ 
+      where: { id: userId },
+      relations: ['leagueTeam']
+    });
     if (!user) return null;
 
     return {
@@ -55,7 +58,24 @@ export class UsersService {
       coins: user.coins,
       stars: user.stars,
       rank: user.rank,
+      leagueTeamId: user.leagueTeamId,
+      leagueTeam: user.leagueTeam ? {
+        id: user.leagueTeam.id,
+        name: user.leagueTeam.name,
+        nickname: user.leagueTeam.nickname,
+        budget: user.leagueTeam.budget,
+      } : null,
     };
+  }
+
+  async selectTeam(userId: string, teamId: string) {
+    const user = await this.findById(userId);
+    if (!user) throw new Error('User not found');
+
+    user.leagueTeamId = teamId;
+    await this.usersRepository.save(user);
+
+    return this.getProfile(userId);
   }
 
   async updateCoins(userId: string, amount: number) {

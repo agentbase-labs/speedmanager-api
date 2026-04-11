@@ -1,4 +1,4 @@
-import { Controller, Get, Post, UseGuards, Request } from '@nestjs/common';
+import { Controller, Get, Post, Put, UseGuards, Request, Body } from '@nestjs/common';
 import { UsersService } from './users.service';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 
@@ -22,5 +22,11 @@ export class UsersController {
   @UseGuards(JwtAuthGuard)
   async openPack(@Request() req) {
     return this.usersService.openPack(req.user.id);
+  }
+
+  @Post('select-team')
+  @UseGuards(JwtAuthGuard)
+  async selectTeam(@Request() req, @Body() body: { teamId: string }) {
+    return this.usersService.selectTeam(req.user.id, body.teamId);
   }
 }

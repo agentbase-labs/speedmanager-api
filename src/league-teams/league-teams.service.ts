@@ -101,29 +101,33 @@ export class LeagueTeamsService implements OnModuleInit {
     console.log('🏆 Seeding league with 16 teams...');
 
     const teamsData = [
-      { name: 'Red Devils', originalName: 'Manchester United', manager: 'Erik ten Hag' },
-      { name: 'Blaugrana', originalName: 'Barcelona', manager: 'Xavi Hernández' },
-      { name: 'Los Blancos', originalName: 'Real Madrid', manager: 'Carlo Ancelotti' },
-      { name: 'The Blues', originalName: 'Chelsea', manager: 'Mauricio Pochettino' },
-      { name: 'The Reds', originalName: 'Liverpool', manager: 'Jürgen Klopp' },
-      { name: 'The Citizens', originalName: 'Manchester City', manager: 'Pep Guardiola' },
-      { name: 'The Gunners', originalName: 'Arsenal', manager: 'Mikel Arteta' },
-      { name: 'Bianconeri', originalName: 'Juventus', manager: 'Massimiliano Allegri' },
-      { name: 'Die Roten', originalName: 'Bayern Munich', manager: 'Thomas Tuchel' },
-      { name: 'Les Parisiens', originalName: 'Paris Saint-Germain', manager: 'Luis Enrique' },
-      { name: 'Rossoneri', originalName: 'AC Milan', manager: 'Stefano Pioli' },
-      { name: 'Nerazzurri', originalName: 'Inter Milan', manager: 'Simone Inzaghi' },
-      { name: 'Spurs', originalName: 'Tottenham', manager: 'Ange Postecoglou' },
-      { name: 'Die Borussen', originalName: 'Borussia Dortmund', manager: 'Edin Terzić' },
-      { name: 'Colchoneros', originalName: 'Atlético Madrid', manager: 'Diego Simeone' },
-      { name: 'I Lupi', originalName: 'AS Roma', manager: 'Daniele De Rossi' },
+      // Top tier teams: $150-200M
+      { name: 'Red Devils', originalName: 'Manchester United', manager: 'Erik ten Hag', budget: 180000000 },
+      { name: 'Blaugrana', originalName: 'Barcelona', manager: 'Xavi Hernández', budget: 175000000 },
+      { name: 'Los Blancos', originalName: 'Real Madrid', manager: 'Carlo Ancelotti', budget: 200000000 },
+      { name: 'The Citizens', originalName: 'Manchester City', manager: 'Pep Guardiola', budget: 190000000 },
+      { name: 'Les Parisiens', originalName: 'Paris Saint-Germain', manager: 'Luis Enrique', budget: 195000000 },
+      { name: 'Die Roten', originalName: 'Bayern Munich', manager: 'Thomas Tuchel', budget: 170000000 },
+      
+      // Mid-tier teams: $80-120M
+      { name: 'The Blues', originalName: 'Chelsea', manager: 'Mauricio Pochettino', budget: 115000000 },
+      { name: 'The Reds', originalName: 'Liverpool', manager: 'Jürgen Klopp', budget: 120000000 },
+      { name: 'The Gunners', originalName: 'Arsenal', manager: 'Mikel Arteta', budget: 110000000 },
+      { name: 'Bianconeri', originalName: 'Juventus', manager: 'Massimiliano Allegri', budget: 95000000 },
+      { name: 'Nerazzurri', originalName: 'Inter Milan', manager: 'Simone Inzaghi', budget: 90000000 },
+      { name: 'Colchoneros', originalName: 'Atlético Madrid', manager: 'Diego Simeone', budget: 100000000 },
+      
+      // Lower tier teams: $50-80M
+      { name: 'Rossoneri', originalName: 'AC Milan', manager: 'Stefano Pioli', budget: 75000000 },
+      { name: 'Spurs', originalName: 'Tottenham', manager: 'Ange Postecoglou', budget: 80000000 },
+      { name: 'Die Borussen', originalName: 'Borussia Dortmund', manager: 'Edin Terzić', budget: 70000000 },
+      { name: 'I Lupi', originalName: 'AS Roma', manager: 'Daniele De Rossi', budget: 60000000 },
     ];
 
     for (const teamData of teamsData) {
       const team = this.leagueTeamsRepository.create({
         ...teamData,
         nickname: teamData.name,
-        budget: Math.floor(50000000 + Math.random() * 50000000),
         formation: this.getRandomFormation(),
         tactics: this.getRandomTactics(),
         recentForm: this.generateRandomForm(),
