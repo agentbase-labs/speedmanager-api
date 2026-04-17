@@ -25,7 +25,7 @@ router.post('/register', async (req, res) => {
     }
 
     // Check if username already exists
-    const existing = await pool.query('SELECT id FROM users WHERE username = $1', [username]);
+    const existing = await pool.query('SELECT id FROM smp_users WHERE username = $1', [username]);
     if (existing.rows.length > 0) {
       return res.status(409).json({ error: 'Username already taken' });
     }
@@ -35,7 +35,7 @@ router.post('/register', async (req, res) => {
 
     // Create user
     const result = await pool.query(
-      'INSERT INTO users (username, password_hash, email) VALUES ($1, $2, $3) RETURNING id, username, email, created_at',
+      'INSERT INTO smp_users (username, password_hash, email) VALUES ($1, $2, $3) RETURNING id, username, email, created_at',
       [username, passwordHash, email || null]
     );
 
@@ -74,7 +74,7 @@ router.post('/login', async (req, res) => {
 
     // Find user
     const result = await pool.query(
-      'SELECT id, username, password_hash, email, created_at FROM users WHERE username = $1',
+      'SELECT id, username, password_hash, email, created_at FROM smp_users WHERE username = $1',
       [username]
     );
 
@@ -116,7 +116,7 @@ router.post('/login', async (req, res) => {
 router.get('/me', authenticateToken, async (req, res) => {
   try {
     const result = await pool.query(
-      'SELECT id, username, email, created_at FROM users WHERE id = $1',
+      'SELECT id, username, email, created_at FROM smp_users WHERE id = $1',
       [req.user.id]
     );
 

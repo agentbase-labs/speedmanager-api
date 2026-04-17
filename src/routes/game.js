@@ -8,7 +8,7 @@ const router = express.Router();
 router.get('/state', authenticateToken, async (req, res) => {
   try {
     const result = await pool.query(
-      'SELECT state, updated_at FROM game_states WHERE user_id = $1',
+      'SELECT state, updated_at FROM smp_game_states WHERE user_id = $1',
       [req.user.id]
     );
 
@@ -37,7 +37,7 @@ router.post('/state', authenticateToken, async (req, res) => {
 
     // Upsert game state (insert or update)
     const result = await pool.query(
-      `INSERT INTO game_states (user_id, state, updated_at)
+      `INSERT INTO smp_game_states (user_id, state, updated_at)
        VALUES ($1, $2, NOW())
        ON CONFLICT (user_id)
        DO UPDATE SET state = $2, updated_at = NOW()
@@ -59,7 +59,7 @@ router.post('/state', authenticateToken, async (req, res) => {
 router.delete('/state', authenticateToken, async (req, res) => {
   try {
     await pool.query(
-      'DELETE FROM game_states WHERE user_id = $1',
+      'DELETE FROM smp_game_states WHERE user_id = $1',
       [req.user.id]
     );
 
