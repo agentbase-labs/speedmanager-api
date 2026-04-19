@@ -31,7 +31,18 @@ async function initDb() {
       )
     `);
 
-    console.log('Database initialized successfully (smp_users, smp_game_states)');
+    // v2.2: Lightweight visit tracking for public stats endpoint.
+    // Counts page loads (one per tab-session). No raw IPs; only a hash.
+    await client.query(`
+      CREATE TABLE IF NOT EXISTS smp_visits (
+        id SERIAL PRIMARY KEY,
+        visited_at TIMESTAMPTZ DEFAULT NOW(),
+        user_agent TEXT,
+        ip_hash TEXT
+      )
+    `);
+
+    console.log('Database initialized successfully (smp_users, smp_game_states, smp_visits)');
   } catch (err) {
     console.error('Database init error:', err.message);
     throw err;
