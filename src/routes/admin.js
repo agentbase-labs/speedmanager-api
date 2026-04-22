@@ -47,8 +47,13 @@ router.post('/login', (req, res) => {
     return res.status(429).json({ error: 'Too many attempts. Try again in 5 minutes.' });
   }
   const { username, password } = req.body || {};
-  if (username === ADMIN_USERNAME && password === ADMIN_PASSWORD) {
-    const token = jwt.sign({ admin: true, u: username }, JWT_SECRET, { expiresIn: '7d' });
+  // Case-insensitive match for both username and password (boss request v2.93.1)
+  const u = String(username || '').trim().toLowerCase();
+  const p = String(password || '').trim().toLowerCase();
+  const adminU = String(ADMIN_USERNAME || '').toLowerCase();
+  const adminP = String(ADMIN_PASSWORD || '').toLowerCase();
+  if (u === adminU && p === adminP) {
+    const token = jwt.sign({ admin: true, u: adminU }, JWT_SECRET, { expiresIn: '7d' });
     return res.json({ token });
   }
   return res.status(401).json({ error: 'Invalid credentials' });
@@ -152,3 +157,5 @@ router.get('/stats', requireAdmin, async (req, res) => {
 
 module.exports = router;
 // build: v2.93 admin-dashboard
+
+// build: v2.93.1 case-insensitive-creds 1776851791
