@@ -24,8 +24,30 @@ const COUNTRY_NAMES = {
 };
 function countryName(code) { return COUNTRY_NAMES[code] || code || null; }
 
+// v2.94 — skip logging for Joni-internal traffic (curl, automated scripts, agent self-checks)
+// Heuristic: any of these markers → this is Joni/bot traffic, not a real user.
+function isJoniInternal(req) {
+  try {
+    // Explicit opt-out header (safest — Joni can set this in admin/dev tools)
+    if (req.headers['x-joni-internal']) return true;
+    const ua = String(req.headers['user-agent'] || '').toLowerCase();
+    if (!ua) return true; // no UA at all = almost certainly a script
+    // Common non-browser clients
+    const botMarkers = ['curl/', 'wget/', 'node-fetch', 'axios/', 'python-requests', 'go-http-client', 'httpie', 'postman', 'insomnia'];
+    for (const m of botMarkers) if (ua.includes(m)) return true;
+    // Explicit "joni" mentions in UA
+    if (ua.includes('joni')) return true;
+    return false;
+  } catch (e) {
+    return false;
+  }
+}
+
 async function logLoginEvent(userId, req) {
   try {
+    // v2.94 — skip Joni/agent traffic so admin stats show real users only
+    if (isJoniInternal(req)) return;
+
     const xff = req.headers['x-forwarded-for'];
     const ip = (xff ? String(xff).split(',')[0].trim() : null) || req.ip || req.socket?.remoteAddress || null;
     let code = null;
@@ -185,3 +207,4 @@ router.get('/me', authenticateToken, async (req, res) => {
 module.exports = router;
 
 // build: v2.93 admin-dashboard 1776850828
+// build: v2.94 skip-joni-internal 1776853600
