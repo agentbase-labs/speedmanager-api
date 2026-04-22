@@ -5,6 +5,7 @@ const { initDb } = require('./db');
 const authRoutes = require('./routes/auth');
 const gameRoutes = require('./routes/game');
 const publicRoutes = require('./routes/public');
+const statsRoutes = require('./routes/stats');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -37,6 +38,7 @@ app.get('/health', (req, res) => {
 app.use('/api/auth', authRoutes);
 app.use('/api/game', gameRoutes);
 app.use('/api/public', publicRoutes);
+app.use('/api/stats', statsRoutes);
 
 // 404 handler
 app.use((req, res) => {

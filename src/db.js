@@ -42,7 +42,22 @@ async function initDb() {
       )
     `);
 
-    console.log('Database initialized successfully (smp_users, smp_game_states, smp_visits)');
+    // v2.90: Global goals counter — single-row table holding worldwide goal total.
+    await client.query(`
+      CREATE TABLE IF NOT EXISTS smp_global_stats (
+        id INTEGER PRIMARY KEY DEFAULT 1,
+        total_goals BIGINT NOT NULL DEFAULT 0,
+        updated_at TIMESTAMPTZ DEFAULT NOW(),
+        CONSTRAINT single_row CHECK (id = 1)
+      )
+    `);
+    await client.query(`
+      INSERT INTO smp_global_stats (id, total_goals)
+      VALUES (1, 0)
+      ON CONFLICT (id) DO NOTHING
+    `);
+
+    console.log('Database initialized successfully (smp_users, smp_game_states, smp_visits, smp_global_stats)');
   } catch (err) {
     console.error('Database init error:', err.message);
     throw err;
