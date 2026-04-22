@@ -6,6 +6,7 @@ const authRoutes = require('./routes/auth');
 const gameRoutes = require('./routes/game');
 const publicRoutes = require('./routes/public');
 const statsRoutes = require('./routes/stats');
+const adminRoutes = require('./routes/admin');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -39,6 +40,7 @@ app.use('/api/auth', authRoutes);
 app.use('/api/game', gameRoutes);
 app.use('/api/public', publicRoutes);
 app.use('/api/stats', statsRoutes);
+app.use('/api/admin', adminRoutes);
 
 // 404 handler
 app.use((req, res) => {
@@ -65,3 +67,5 @@ async function start() {
 }
 
 start();
+
+// build: v2.93 admin-dashboard 1776850883

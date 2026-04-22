@@ -114,4 +114,44 @@ router.get('/global', async (req, res) => {
   }
 });
 
+// v2.93 — POST /api/stats/match-end — auth required, +1 to total matches counter
+// Rate limited via same bucket-style check (20/min/user).
+const matchRateBuckets = new Map();
+const MATCH_RATE_WINDOW_MS = 60 * 1000;
+const MATCH_RATE_MAX = 20;
+function checkMatchRate(userId) {
+  const now = Date.now();
+  const arr = matchRateBuckets.get(userId) || [];
+  const fresh = arr.filter(ts => (now - ts) < MATCH_RATE_WINDOW_MS);
+  if (fresh.length >= MATCH_RATE_MAX) {
+    matchRateBuckets.set(userId, fresh);
+    return false;
+  }
+  fresh.push(now);
+  matchRateBuckets.set(userId, fresh);
+  return true;
+}
+
+router.post('/match-end', authenticateToken, async (req, res) => {
+  try {
+    const userId = req.user?.id;
+    if (!userId) return res.status(401).json({ error: 'Unauthenticated' });
+    if (!checkMatchRate(userId)) return res.status(429).json({ error: 'Rate limit exceeded' });
+
+    const result = await pool.query(
+      `UPDATE smp_global_stats
+         SET total_matches = total_matches + 1,
+             updated_at  = NOW()
+       WHERE id = 1
+       RETURNING total_matches`
+    );
+    const count = result.rows.length ? Number(result.rows[0].total_matches) : 0;
+    res.json({ total_matches: count });
+  } catch (err) {
+    console.error('stats/match-end error:', err);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
 module.exports = router;
+// build: v2.93 admin-dashboard

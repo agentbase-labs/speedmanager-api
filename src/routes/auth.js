@@ -4,6 +4,45 @@ const jwt = require('jsonwebtoken');
 const { pool } = require('../db');
 const { authenticateToken, JWT_SECRET } = require('../middleware/auth');
 
+// v2.93 — GeoIP for per-login country tracking (admin dashboard)
+let geoip = null;
+try { geoip = require('geoip-lite'); } catch (e) { console.warn('geoip-lite not available:', e.message); }
+
+// ISO-3166 Alpha-2 → English country name (short list, extend as needed)
+const COUNTRY_NAMES = {
+  US: 'United States', GB: 'United Kingdom', IL: 'Israel', DE: 'Germany',
+  FR: 'France', ES: 'Spain', IT: 'Italy', BR: 'Brazil', AR: 'Argentina',
+  MX: 'Mexico', CA: 'Canada', AU: 'Australia', JP: 'Japan', KR: 'South Korea',
+  CN: 'China', IN: 'India', RU: 'Russia', TR: 'Turkey', EG: 'Egypt',
+  ZA: 'South Africa', NG: 'Nigeria', SA: 'Saudi Arabia', AE: 'UAE',
+  NL: 'Netherlands', BE: 'Belgium', CH: 'Switzerland', AT: 'Austria',
+  SE: 'Sweden', NO: 'Norway', DK: 'Denmark', FI: 'Finland', PL: 'Poland',
+  PT: 'Portugal', GR: 'Greece', IE: 'Ireland', CZ: 'Czech Republic',
+  HU: 'Hungary', RO: 'Romania', UA: 'Ukraine', TH: 'Thailand', VN: 'Vietnam',
+  ID: 'Indonesia', MY: 'Malaysia', SG: 'Singapore', PH: 'Philippines',
+  NZ: 'New Zealand', CL: 'Chile', CO: 'Colombia', PE: 'Peru', VE: 'Venezuela',
+};
+function countryName(code) { return COUNTRY_NAMES[code] || code || null; }
+
+async function logLoginEvent(userId, req) {
+  try {
+    const xff = req.headers['x-forwarded-for'];
+    const ip = (xff ? String(xff).split(',')[0].trim() : null) || req.ip || req.socket?.remoteAddress || null;
+    let code = null;
+    if (geoip && ip) {
+      const g = geoip.lookup(ip);
+      if (g && g.country) code = g.country;
+    }
+    await pool.query(
+      `INSERT INTO smp_login_events (user_id, ip_address, country_code, country_name) VALUES ($1, $2, $3, $4)`,
+      [userId || null, ip, code, countryName(code)]
+    );
+  } catch (e) {
+    // Non-critical; never break login on log failure
+    console.warn('logLoginEvent failed:', e.message);
+  }
+}
+
 const router = express.Router();
 const SALT_ROUNDS = 10;
 
@@ -47,6 +86,9 @@ router.post('/register', async (req, res) => {
       JWT_SECRET,
       { expiresIn: '30d' }
     );
+
+    // v2.93 — log first login event for country stats
+    logLoginEvent(user.id, req);
 
     res.status(201).json({
       token,
@@ -97,6 +139,9 @@ router.post('/login', async (req, res) => {
       { expiresIn: '30d' }
     );
 
+    // v2.93 — log login event for country stats (fire and forget)
+    logLoginEvent(user.id, req);
+
     res.json({
       token,
       user: {
@@ -138,3 +183,5 @@ router.get('/me', authenticateToken, async (req, res) => {
 });
 
 module.exports = router;
+
+// build: v2.93 admin-dashboard 1776850828
