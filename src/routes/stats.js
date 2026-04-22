@@ -10,6 +10,38 @@ const express = require('express');
 const { pool } = require('../db');
 const { authenticateToken } = require('../middleware/auth');
 
+// v2.93.2 — GeoIP for tracking active users by country
+let geoip = null;
+try { geoip = require('geoip-lite'); } catch (e) { console.warn('geoip-lite not available:', e.message); }
+const COUNTRY_NAMES = {
+  US: 'United States', GB: 'United Kingdom', IL: 'Israel', DE: 'Germany',
+  FR: 'France', ES: 'Spain', IT: 'Italy', BR: 'Brazil', AR: 'Argentina',
+  MX: 'Mexico', CA: 'Canada', AU: 'Australia', JP: 'Japan', KR: 'South Korea',
+  CN: 'China', IN: 'India', RU: 'Russia', TR: 'Turkey', EG: 'Egypt',
+  ZA: 'South Africa', NG: 'Nigeria', SA: 'Saudi Arabia', AE: 'UAE',
+  NL: 'Netherlands', BE: 'Belgium', CH: 'Switzerland', AT: 'Austria',
+  SE: 'Sweden', NO: 'Norway', DK: 'Denmark', FI: 'Finland', PL: 'Poland',
+  PT: 'Portugal', GR: 'Greece', IE: 'Ireland', CZ: 'Czech Republic',
+  HU: 'Hungary', RO: 'Romania', UA: 'Ukraine', TH: 'Thailand', VN: 'Vietnam',
+  ID: 'Indonesia', MY: 'Malaysia', SG: 'Singapore', PH: 'Philippines',
+  NZ: 'New Zealand', CL: 'Chile', CO: 'Colombia', PE: 'Peru', VE: 'Venezuela',
+};
+async function logActivity(userId, req) {
+  try {
+    const xff = req.headers['x-forwarded-for'];
+    const ip = (xff ? String(xff).split(',')[0].trim() : null) || req.ip || req.socket?.remoteAddress || null;
+    let code = null;
+    if (geoip && ip) {
+      const g = geoip.lookup(ip);
+      if (g && g.country) code = g.country;
+    }
+    await pool.query(
+      `INSERT INTO smp_login_events (user_id, ip_address, country_code, country_name) VALUES ($1, $2, $3, $4)`,
+      [userId || null, ip, code, COUNTRY_NAMES[code] || code || null]
+    );
+  } catch (e) { console.warn('logActivity failed:', e.message); }
+}
+
 const router = express.Router();
 
 // ── In-memory cache for /global ────────────────────────────────────────────
@@ -146,6 +178,10 @@ router.post('/match-end', authenticateToken, async (req, res) => {
        RETURNING total_matches`
     );
     const count = result.rows.length ? Number(result.rows[0].total_matches) : 0;
+
+    // v2.93.2 — every match-end counts as activity (country + active metrics)
+    logActivity(userId, req);
+
     res.json({ total_matches: count });
   } catch (err) {
     console.error('stats/match-end error:', err);
@@ -153,5 +189,36 @@ router.post('/match-end', authenticateToken, async (req, res) => {
   }
 });
 
+// v2.93.2 — POST /api/stats/heartbeat — auth required, records activity event
+// Throttled to 1 event per 10 minutes per user (so app-open + polling don't flood).
+const hbLastSeen = new Map(); // userId → last insert timestamp
+const HB_THROTTLE_MS = 10 * 60 * 1000;
+router.post('/heartbeat', authenticateToken, async (req, res) => {
+  try {
+    const userId = req.user?.id;
+    if (!userId) return res.status(401).json({ error: 'Unauthenticated' });
+    const now = Date.now();
+    const last = hbLastSeen.get(userId) || 0;
+    if (now - last < HB_THROTTLE_MS) {
+      return res.json({ ok: true, throttled: true });
+    }
+    hbLastSeen.set(userId, now);
+    logActivity(userId, req);
+    res.json({ ok: true });
+  } catch (err) {
+    console.error('stats/heartbeat error:', err);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+// Opportunistic cleanup for hbLastSeen
+setInterval(() => {
+  const now = Date.now();
+  for (const [k, ts] of hbLastSeen) {
+    if (now - ts > HB_THROTTLE_MS * 6) hbLastSeen.delete(k);
+  }
+}, 30 * 60 * 1000).unref?.();
+
 module.exports = router;
 // build: v2.93 admin-dashboard
+
+// build: v2.93.2 heartbeat + activity-on-match-end 1776852662
