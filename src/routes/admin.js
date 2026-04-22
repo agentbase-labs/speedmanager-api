@@ -155,7 +155,56 @@ router.get('/stats', requireAdmin, async (req, res) => {
   }
 });
 
+// v2.95 — GET /api/admin/milestones
+// Returns two feeds:
+//   milestones: every goal-event row whose global_goal_number is a milestone
+//               (100, 500, 1000, 1500, 2000, 2500, 3000 — any multiple of 500
+//                up to 5000 inclusive — then every 5000 after that).
+//   recent:     the latest 20 goal events regardless of milestone.
+// Both feeds read from smp_goal_events which only starts collecting from v2.95,
+// so older milestones (e.g. goal #500, #1000) will be absent — expected.
+router.get('/milestones', requireAdmin, async (req, res) => {
+  try {
+    const [milestonesR, recentR] = await Promise.all([
+      pool.query(`
+        SELECT id, global_goal_number, user_id, username,
+               player_name, player_id, team_id, team_name,
+               opponent_id, opponent_name, minute, is_home,
+               country_code, created_at
+          FROM smp_goal_events
+         WHERE (
+           global_goal_number <= 5000
+           AND global_goal_number % 500 = 0
+         )
+         OR (
+           global_goal_number > 5000
+           AND global_goal_number % 5000 = 0
+         )
+         ORDER BY global_goal_number ASC
+      `),
+      pool.query(`
+        SELECT id, global_goal_number, user_id, username,
+               player_name, player_id, team_id, team_name,
+               opponent_id, opponent_name, minute, is_home,
+               country_code, created_at
+          FROM smp_goal_events
+         ORDER BY id DESC
+         LIMIT 20
+      `),
+    ]);
+
+    res.json({
+      milestones: milestonesR.rows,
+      recent: recentR.rows,
+    });
+  } catch (err) {
+    console.error('admin/milestones error:', err);
+    res.status(500).json({ error: 'Internal server error', detail: err.message });
+  }
+});
+
 module.exports = router;
 // build: v2.93 admin-dashboard
 
 // build: v2.93.1 case-insensitive-creds 1776851791
+// build: v2.95 goal-events-log 1776874633
