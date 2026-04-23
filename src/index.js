@@ -30,7 +30,7 @@ app.get('/health', (req, res) => {
   res.json({
     status: 'ok',
     service: 'Speed Manager Pro API',
-    version: '2.2.0',
+    version: '2.96.0',
     timestamp: new Date().toISOString()
   });
 });
@@ -69,3 +69,5 @@ async function start() {
 start();
 
 // build: v2.93 admin-dashboard 1776850883
+
+// build: v2.96 shimshon-unlock

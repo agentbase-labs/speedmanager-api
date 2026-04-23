@@ -101,7 +101,16 @@ async function initDb() {
     await client.query(`CREATE INDEX IF NOT EXISTS smp_goal_events_user_idx ON smp_goal_events (user_id)`);
     await client.query(`CREATE INDEX IF NOT EXISTS smp_goal_events_created_idx ON smp_goal_events (created_at DESC)`);
 
-    console.log('Database initialized successfully (smp_users, smp_game_states, smp_visits, smp_global_stats, smp_login_events, smp_goal_events)');
+    // v2.96: Shimshon Yeladim Alef easter-egg unlock flag (one-time per user).
+    // Frontend v3.08 — Transfers search input matches the Hebrew string "שמשון"
+    // and calls POST /api/game/unlock-shimshon. Flag is exposed in the
+    // GET /api/game/state response (root-level `shimshon_unlocked` boolean).
+    await client.query(`
+      ALTER TABLE smp_users
+      ADD COLUMN IF NOT EXISTS shimshon_unlocked BOOLEAN NOT NULL DEFAULT FALSE
+    `);
+
+    console.log('Database initialized successfully (smp_users, smp_game_states, smp_visits, smp_global_stats, smp_login_events, smp_goal_events; +shimshon_unlocked col)');
   } catch (err) {
     console.error('Database init error:', err.message);
     throw err;
