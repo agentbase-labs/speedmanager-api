@@ -30,7 +30,7 @@ app.get('/health', (req, res) => {
   res.json({
     status: 'ok',
     service: 'Speed Manager Pro API',
-    version: '2.97.0',
+    version: '2.97.1',
     timestamp: new Date().toISOString()
   });
 });

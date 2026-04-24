@@ -133,7 +133,7 @@ router.get('/stats', requireAdmin, async (req, res) => {
          WHERE gs.state IS NOT NULL
            AND (gs.state::jsonb) ? 'matchesPlayedByUser'
          ORDER BY matches DESC NULLS LAST
-         LIMIT 5
+         LIMIT 10
       `).catch((e) => { console.warn('topUsersByMatches fallback:', e.message); return { rows: [] }; }),
 
       // v2.97 — Top 5 users most active TODAY (by activity events: match-end + heartbeat + logins since local midnight UTC)
@@ -145,7 +145,7 @@ router.get('/stats', requireAdmin, async (req, res) => {
            AND le.created_at >= DATE_TRUNC('day', NOW())
          GROUP BY u.username
          ORDER BY events DESC
-         LIMIT 5
+         LIMIT 10
       `).catch(() => ({ rows: [] })),
 
       // v2.97 — Top 5 in-game players by total goals scored across all users (Roy Hogeg, Messi, etc.)
@@ -159,7 +159,7 @@ router.get('/stats', requireAdmin, async (req, res) => {
            AND LENGTH(TRIM(player_name)) > 0
          GROUP BY player_name, team_name
          ORDER BY goals DESC
-         LIMIT 5
+         LIMIT 10
       `).catch(() => ({ rows: [] })),
 
       // v2.97 — Top 5 in-game scorers TODAY
@@ -173,7 +173,7 @@ router.get('/stats', requireAdmin, async (req, res) => {
            AND created_at >= DATE_TRUNC('day', NOW())
          GROUP BY player_name, team_name
          ORDER BY goals DESC
-         LIMIT 5
+         LIMIT 10
       `).catch(() => ({ rows: [] })),
 
       // v2.97 — Average goals per match (global). Guard divide-by-zero.
@@ -204,7 +204,7 @@ router.get('/stats', requireAdmin, async (req, res) => {
            AND (state::jsonb)->>'selectedTeamId' IS NOT NULL
          GROUP BY team_id
          ORDER BY c DESC
-         LIMIT 5
+         LIMIT 10
       `).catch(() => ({ rows: [] })),
 
       // v2.97 — Goals scored today (global)
@@ -330,3 +330,5 @@ module.exports = router;
 // build: v2.95 goal-events-log 1776874633
 
 // build: v2.97 admin-leaderboards — new payload fields: top_users_by_matches, top_users_today, top_scorers, top_scorers_today, avg_goals_per_match, peak_hour_utc, top_teams_selected, goals_today
+
+// build: v2.97.1 top10-limits — expanded all 5 LIMIT 5 queries to LIMIT 10 per boss directive (also top_countries_by_* from LIMIT 10 which was already 10)
