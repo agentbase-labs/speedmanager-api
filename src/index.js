@@ -30,7 +30,7 @@ app.get('/health', (req, res) => {
   res.json({
     status: 'ok',
     service: 'Speed Manager Pro API',
-    version: '2.96.0',
+    version: '2.97.0',
     timestamp: new Date().toISOString()
   });
 });
@@ -71,3 +71,5 @@ start();
 // build: v2.93 admin-dashboard 1776850883
 
 // build: v2.96 shimshon-unlock
+
+// build: v2.97 admin-leaderboards — top-users-by-matches, top-users-today, top-scorers (total + today), avg-goals-per-match, peak-hour, top-teams-selected, goals-today

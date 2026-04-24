@@ -78,6 +78,15 @@ router.get('/stats', requireAdmin, async (req, res) => {
       topCountriesLoginsR,
       topCountriesUsersR,
       lastLoginR,
+      // v2.97 — new: user leaderboards + in-game top scorers
+      topUsersByMatchesR,
+      topUsersTodayR,
+      topScorersR,
+      topScorersTodayR,
+      avgGoalsPerMatchR,
+      peakHourR,
+      mostPopularTeamR,
+      goalsTodayR,
     ] = await Promise.all([
       pool.query(`SELECT total_goals, total_matches, updated_at FROM smp_global_stats WHERE id = 1`),
       pool.query(`SELECT COUNT(*)::int AS c FROM smp_users`),
@@ -114,6 +123,95 @@ router.get('/stats', requireAdmin, async (req, res) => {
         LIMIT 10
       `),
       pool.query(`SELECT MAX(created_at) AS t FROM smp_login_events`),
+
+      // v2.97 — Top 5 users by matches played (total; pulled from game_states JSONB state.matchesPlayedByUser)
+      pool.query(`
+        SELECT u.username AS username,
+               COALESCE((gs.state::jsonb)->>'matchesPlayedByUser', '0')::int AS matches
+          FROM smp_game_states gs
+          JOIN smp_users u ON u.id = gs.user_id
+         WHERE gs.state IS NOT NULL
+           AND (gs.state::jsonb) ? 'matchesPlayedByUser'
+         ORDER BY matches DESC NULLS LAST
+         LIMIT 5
+      `).catch((e) => { console.warn('topUsersByMatches fallback:', e.message); return { rows: [] }; }),
+
+      // v2.97 — Top 5 users most active TODAY (by activity events: match-end + heartbeat + logins since local midnight UTC)
+      pool.query(`
+        SELECT u.username AS username, COUNT(*)::int AS events
+          FROM smp_login_events le
+          JOIN smp_users u ON u.id = le.user_id
+         WHERE le.user_id IS NOT NULL
+           AND le.created_at >= DATE_TRUNC('day', NOW())
+         GROUP BY u.username
+         ORDER BY events DESC
+         LIMIT 5
+      `).catch(() => ({ rows: [] })),
+
+      // v2.97 — Top 5 in-game players by total goals scored across all users (Roy Hogeg, Messi, etc.)
+      // Only from v2.95+ (smp_goal_events). Strips empty/null names.
+      pool.query(`
+        SELECT player_name AS name,
+               team_name AS team,
+               COUNT(*)::int AS goals
+          FROM smp_goal_events
+         WHERE player_name IS NOT NULL
+           AND LENGTH(TRIM(player_name)) > 0
+         GROUP BY player_name, team_name
+         ORDER BY goals DESC
+         LIMIT 5
+      `).catch(() => ({ rows: [] })),
+
+      // v2.97 — Top 5 in-game scorers TODAY
+      pool.query(`
+        SELECT player_name AS name,
+               team_name AS team,
+               COUNT(*)::int AS goals
+          FROM smp_goal_events
+         WHERE player_name IS NOT NULL
+           AND LENGTH(TRIM(player_name)) > 0
+           AND created_at >= DATE_TRUNC('day', NOW())
+         GROUP BY player_name, team_name
+         ORDER BY goals DESC
+         LIMIT 5
+      `).catch(() => ({ rows: [] })),
+
+      // v2.97 — Average goals per match (global). Guard divide-by-zero.
+      pool.query(`
+        SELECT CASE WHEN total_matches > 0
+                    THEN ROUND(total_goals::numeric / total_matches::numeric, 2)
+                    ELSE 0 END AS avg
+          FROM smp_global_stats WHERE id = 1
+      `).catch(() => ({ rows: [{ avg: 0 }] })),
+
+      // v2.97 — Peak activity hour of day (UTC) over last 7 days
+      pool.query(`
+        SELECT EXTRACT(HOUR FROM created_at)::int AS hour,
+               COUNT(*)::int AS c
+          FROM smp_login_events
+         WHERE created_at > NOW() - INTERVAL '7 days'
+         GROUP BY hour
+         ORDER BY c DESC
+         LIMIT 1
+      `).catch(() => ({ rows: [] })),
+
+      // v2.97 — Most popular team selected
+      pool.query(`
+        SELECT (state::jsonb)->>'selectedTeamId' AS team_id, COUNT(*)::int AS c
+          FROM smp_game_states
+         WHERE state IS NOT NULL
+           AND (state::jsonb) ? 'selectedTeamId'
+           AND (state::jsonb)->>'selectedTeamId' IS NOT NULL
+         GROUP BY team_id
+         ORDER BY c DESC
+         LIMIT 5
+      `).catch(() => ({ rows: [] })),
+
+      // v2.97 — Goals scored today (global)
+      pool.query(`
+        SELECT COUNT(*)::int AS c FROM smp_goal_events
+         WHERE created_at >= DATE_TRUNC('day', NOW())
+      `).catch(() => ({ rows: [{ c: 0 }] })),
     ]);
 
     const gs = globalStatsR.rows[0] || { total_goals: 0, total_matches: 0, updated_at: new Date().toISOString() };
@@ -143,6 +241,28 @@ router.get('/stats', requireAdmin, async (req, res) => {
         code: r.code, name: r.name || r.code, count: r.c,
       })),
       last_login: lastLoginR.rows[0].t || null,
+      // v2.97 — new leaderboards
+      top_users_by_matches: topUsersByMatchesR.rows.map(r => ({
+        username: r.username, matches: Number(r.matches || 0),
+      })),
+      top_users_today: topUsersTodayR.rows.map(r => ({
+        username: r.username, events: Number(r.events || 0),
+      })),
+      top_scorers: topScorersR.rows.map(r => ({
+        name: r.name, team: r.team, goals: Number(r.goals || 0),
+      })),
+      top_scorers_today: topScorersTodayR.rows.map(r => ({
+        name: r.name, team: r.team, goals: Number(r.goals || 0),
+      })),
+      avg_goals_per_match: Number(avgGoalsPerMatchR.rows[0]?.avg || 0),
+      peak_hour_utc: peakHourR.rows[0] ? {
+        hour: Number(peakHourR.rows[0].hour),
+        count: Number(peakHourR.rows[0].c || 0),
+      } : null,
+      top_teams_selected: mostPopularTeamR.rows.map(r => ({
+        team_id: r.team_id, count: Number(r.c || 0),
+      })),
+      goals_today: Number(goalsTodayR.rows[0]?.c || 0),
       server_time: new Date().toISOString(),
     };
 
@@ -208,3 +328,5 @@ module.exports = router;
 
 // build: v2.93.1 case-insensitive-creds 1776851791
 // build: v2.95 goal-events-log 1776874633
+
+// build: v2.97 admin-leaderboards — new payload fields: top_users_by_matches, top_users_today, top_scorers, top_scorers_today, avg_goals_per_match, peak_hour_utc, top_teams_selected, goals_today
